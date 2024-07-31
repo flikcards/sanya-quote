@@ -1,0 +1,531 @@
+<!DOCTYPE html>
+<html>
+
+<head>
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Quotation Form</title>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf/2.5.1/jspdf.umd.min.js"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/dompurify/2.3.4/purify.min.js"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/html2canvas/1.4.1/html2canvas.min.js"></script>
+    <style>
+        :root {
+            --primary-blue: #1a73e8;
+            --light-blue: #e8f0fe;
+            --white: #ffffff;
+        }
+    
+        body {
+            font-family: Arial, sans-serif;
+            background-color: var(--light-blue);
+            color: #333;
+            margin: 0;
+            padding: 0;
+        }
+    
+        .container {
+            width: 90%;
+            max-width: 800px;
+            margin: 0 auto;
+            padding: 20px;
+            background-color: var(--white);
+            box-shadow: 0 0 10px rgba(0, 0, 0, 0.1);
+            border-radius: 8px;
+        }
+    
+        h1 {
+            color: var(--primary-blue);
+            text-align: center;
+            margin-bottom: 30px;
+        }
+    
+        .form-group {
+            margin-bottom: 20px;
+            text-align: left;
+        }
+    
+        .form-group label {
+            display: block;
+            margin-bottom: 5px;
+            color: var(--primary-blue);
+            font-weight: bold;
+        }
+    
+        input[type="text"],
+        input[type="email"],
+        input[type="tel"],
+        select {
+            width: 100%;
+            padding: 10px;
+            border: 1px solid #ccc;
+            border-radius: 4px;
+            font-size: 16px;
+            box-sizing: border-box;
+        }
+    
+        select {
+            appearance: none;
+            -webkit-appearance: none;
+            -moz-appearance: none;
+            background-image: url('data:image/svg+xml;utf8,<svg fill="%231a73e8" height="24" viewBox="0 0 24 24" width="24" xmlns="http://www.w3.org/2000/svg"><path d="M7 10l5 5 5-5z"/><path d="M0 0h24v24H0z" fill="none"/></svg>');
+            background-repeat: no-repeat;
+            background-position-x: 98%;
+            background-position-y: 50%;
+        }
+    
+        button {
+            background-color: var(--primary-blue);
+            color: var(--white);
+            padding: 12px 20px;
+            border: none;
+            border-radius: 4px;
+            cursor: pointer;
+            font-size: 16px;
+            width: 100%;
+            transition: background-color 0.3s;
+        }
+    
+        button:hover {
+            background-color: #1557b0;
+        }
+    
+        .quotation-template {
+            display: none;
+            margin: 20px auto;
+            width: 100%;
+            max-width: 800px;
+            text-align: center;
+        }
+    
+        .quotation {
+            width: 100%;
+            border-collapse: collapse;
+            margin: 0 auto;
+            background-color: var(--white);
+        }
+    
+        .quotation,
+        .quotation th,
+        .quotation td {
+            border: 1px solid var(--primary-blue);
+        }
+    
+        .quotation th,
+        .quotation td {
+            padding: 10px;
+            text-align: left;
+        }
+    
+        .quotation tr:nth-child(even) {
+            background-color: var(--light-blue);
+        }
+    
+        .pdf-viewer {
+            display: none;
+            text-align: center;
+            margin-top: 30px;
+        }
+    
+        .pdf-viewer iframe {
+            width: 100%;
+            height: 600px;
+            border: none;
+            box-shadow: 0 0 10px rgba(0, 0, 0, 0.1);
+        }
+    
+        @media screen and (max-width: 600px) {
+            .container {
+                width: 95%;
+                padding: 10px;
+            }
+    
+            input[type="text"],
+            input[type="email"],
+            input[type="tel"],
+            select,
+            button {
+                font-size: 14px;
+            }
+    
+            .quotation th,
+            .quotation td {
+                padding: 5px;
+                font-size: 12px;
+            }
+    
+            .pdf-viewer iframe {
+                height: 400px;
+            }
+        }
+    </style>
+</head>
+
+<body>
+    <div>
+    </div>
+    <div class="container">
+        <h1>Fill Quotation Details</h1>
+        <form id="quotationForm">
+            <div class="form-group">
+                <label for="clientName">Client Name:</label>
+                <input type="text" id="clientName" name="clientName">
+            </div>
+            <div class="form-group">
+                <label for="phoneNumber">Phone Number:</label>
+                <input type="tel" id="phoneNumber" name="phoneNumber">
+            </div>
+            <div class="form-group">
+                <label for="email">Email ID:</label>
+                <input type="email" id="email" name="email">
+            </div>
+            <div class="form-group">
+                <select style="width: 20%;" onchange="handleDrop()">
+                    <option>EV</option>
+                    <option>PV</option>
+                </select>
+            </div>
+            <div class="form-group">
+                <select style="width: 20%;" id="model">
+                    <option>TIAGO EV</option>
+                    <option>TIGORE EV</option>
+                    <option>PUNCH EV</option>
+                    <option>NEXON EV</option>
+                </select>
+            </div>
+            <button type="submit">Generate PDF</button>
+            <p></p>
+        </form>
+    </div>
+
+    <div class="quotation-template" id="quotationTemplate">
+        <table class="quotation">
+            <tr>
+                <td colspan="6">Quotation</td>
+            </tr>
+            <tr>
+                <td colspan="1">Passenger</td>
+                <td colspan="3">Sanya</td>
+                <td colspan="2">Tata Motors</td>
+            </tr>
+            <tr>
+                <td colspan="2">PERFORMA</td>
+                <td colspan="1">15</td>
+                <td colspan="2">DATE</td>
+                <td colspan="2">14-03-24</td>
+            </tr>
+            <tr>
+                <td colspan="2">Customer Name</td>
+                <td colspan="4" id="clientNameDisplay">Sanjay</td>
+            </tr>
+            <tr>
+                <td colspan="6"></td>
+            </tr>
+            <tr>
+                <td colspan="2">Address</td>
+                <td colspan="4">Abad</td>
+            </tr>
+            <tr>
+                <td colspan="6"></td>
+            </tr>
+            <tr>
+                <td colspan="">Mobile</td>
+                <td colspan="1" id="phoneNumberDisplay">9899</td>
+                <td colspan="1">MODEL</td>
+                <td colspan="3" id="modelDisplay">Tata</td>
+            </tr>
+            <tr>
+                <td colspan="2"></td>
+                <td colspan="0.5">COLOR</td>
+                <td colspan="3.5">WHITE</td>
+            </tr>
+            <tr>
+                <td colspan="3">Price</td>
+                <td colspan="3">5000</td>
+            </tr>
+            <tr>
+                <td colspan="3">Price</td>
+                <td colspan="3">5000</td>
+            </tr>
+            <tr>
+                <td colspan="3">Price</td>
+                <td colspan="3">5000</td>
+            </tr>
+            <tr>
+                <td colspan="3">Price</td>
+                <td colspan="3">5000</td>
+            </tr>
+            <tr>
+                <td colspan="3"><strong>ON ROAD PRICE</strong></td>
+                <td colspan="3"><strong>Rs. 967,818</strong></td>
+            </tr>
+            <tr>
+                <td colspan="3">
+                    Terms & conditions
+                    <ol>
+                        <li>Lorem ipsum dolor sit amet, consectetur adipisicing elit. Dolorum, aperiam!</li>
+                        <li>Lorem ipsum dolor sit amet, consectetur adipisicing elit. Dolorum, aperiam!</li>
+                    </ol>
+                </td>
+                <td colspan="3"></td>
+            </tr>
+            <tr>
+                <td colspan="3">Our Banking Detail</td>
+            </tr>
+            <tr>
+                <td>Account Name :-</td>
+                <td colspan="2">Sanya Motors</td>
+            </tr>
+            <tr>
+                <td>Account Name :-</td>
+                <td>6003430</td>
+                <td>6003430</td>
+            </tr>
+            <tr>
+                <td>Account Name :-</td>
+                <td>6003430</td>
+                <td>6003430</td>
+            </tr>
+            <tr>
+                <td>Account Name :-</td>
+                <td>6003430</td>
+                <td>6003430</td>
+            </tr>
+            <tr>
+                <td>Account Name :-</td>
+                <td>6003430</td>
+                <td>6003430</td>
+            </tr>
+            <tr>
+                <td colspan="6">** Price & Statutory Leavies At the time of Delivery are applicable **</td>
+            </tr>
+            <tr>
+                <td colspan="6"></td>
+            </tr>
+            <!-- <tr>
+                <td colspan="6">FINANCE DOCUMENTS</td>
+            </tr>
+            <tr>
+                <td>Business / Profession</td>
+                <td>Salaried Customer</td>
+            </tr>
+            <tr>
+                <td>1) Pan Card</td>
+                <td>salary slip last 3 months</td>
+            </tr>
+            <tr>
+                <td>1) Pan Card</td>
+                <td>salary slip last 3 months</td>
+            </tr>
+            <tr>
+                <td>1) Pan Card</td>
+                <td>salary slip last 3 months</td>
+            </tr>
+            <tr>
+                <td>1) Pan Card</td>
+                <td>salary slip last 3 months</td>
+            </tr>
+            <tr>
+                <td colspan="2"></td>
+            </tr>
+            <tr>
+                <td>CA NAME</td>
+                <td>KSHITIJ GAROLE</td>
+            </tr>
+            <tr>
+                <td>MOBILE NO.</td>
+                <td>7350009832</td>
+            </tr>
+            <tr>
+                <td>FINANCE</td>
+                <td></td>
+            </tr>
+            <tr>
+                <td>MOBILE NO.</td>
+                <td></td>
+            </tr>
+            <tr>
+                <td colspan="2"></td>
+                <td colspan="4">SIGNATURE PURPOSE</td>
+            </tr> -->
+
+            <!-- $$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$ -->
+
+            <!-- <tr>
+                <th colspan="2">Quote to:</th>
+                <th colspan="2">Quote From:</th>
+            </tr>
+            <tr>
+                <td colspan="2" id="clientDetails">Client Name: <span id="clientNameDisplay"></span><br>Phone No.: <span
+                        id="phoneNumberDisplay"></span></td>    
+                <td colspan="2">Name: <br>Address:</td>
+            </tr>
+            <tr>
+                <th>Description</th>
+                <th>Unit</th>
+                <th>Quantity</th>
+                <th>Price/Unit</th>
+                <th>GST (%)</th>
+                <th>Amount</th>
+            </tr>
+            <tr>
+                <td>Sofa</td>
+                <td>Set</td>
+                <td>1</td>
+                <td>50</td>
+                <td>12</td>
+                <td>56</td>
+            </tr>
+            <tr>
+                <td>Steel Items</td>
+                <td>Set</td>
+                <td>2</td>
+                <td>60</td>
+                <td>12</td>
+                <td>134.4</td>
+            </tr>
+            <tr>
+                <td>Gas Stove</td>
+                <td>Set</td>
+                <td>2</td>
+                <td>50</td>
+                <td>12</td>
+                <td>112</td>
+            </tr>
+            <tr>
+                <td>Bamboos</td>
+                <td>KG</td>
+                <td>3</td>
+                <td>50</td>
+                <td>12</td>
+                <td>168</td>
+            </tr>
+            <tr>
+                <td colspan="5">Sub Total:</td>
+                <td>470.4</td>
+            </tr>
+            <tr>
+                <td colspan="5">Discount:</td>
+                <td>100.00</td>
+            </tr>
+            <tr>
+                <td colspan="5">Final Amount:</td>
+                <td>370.4</td>
+            </tr>
+            <tr>
+                <td colspan="5">Amount Paid:</td>
+                <td>100.00</td>
+            </tr>
+            <tr>
+                <td colspan="5">Balance:</td>
+                <td>270.4</td>
+            </tr> -->
+        </table>
+        <!-- <img style="width: 102%;" src="sanya.png"> -->
+
+        <!-- <table class="quotation">
+            <tr>
+                <td colspan="4">Quotation</td>
+            </tr>
+            <tr>
+                <td colspan="1.3333">Passenger</td>
+                <td colspan="1.3333">Sanya Motors</td>
+                <td colspan="1.3333">TATA MOTORS</td>
+            </tr>
+            <tr>
+                <td>PERFORMA INVOICE</td>
+                <td>15</td>
+                <td>DATE</td>
+                <td>DATE</td>
+            </tr>
+        </table> -->
+    </div>
+
+    <div class="pdf-viewer" id="pdfViewer">
+        <h2>PDF Preview</h2>
+        <iframe id="pdfFrame" src=""></iframe>
+        <button onclick="downloadPDF()">Download PDF</button>
+    </div>
+
+
+    <script>
+        document.getElementById('quotationForm').addEventListener('submit', function (event) {
+            event.preventDefault();
+
+            const clientName = document.getElementById('clientName').value;
+            const phoneNumber = document.getElementById('phoneNumber').value;
+            const model = document.getElementById('model').value;
+
+            document.getElementById('clientNameDisplay').textContent = clientName;
+            document.getElementById('phoneNumberDisplay').textContent = phoneNumber;
+            document.getElementById('modelDisplay').textContent = model;
+
+            generatePDF();
+        });
+
+        async function generatePDF() {
+            const { jsPDF } = window.jspdf;
+
+            const doc = new jsPDF();
+            const quotationTemplate = document.getElementById('quotationTemplate');
+
+            // Ensure the quotation template is visible
+            quotationTemplate.style.display = 'block';
+
+            // Use html2canvas to render the HTML to a canvas
+            const canvas = await html2canvas(quotationTemplate, {
+                scale: 2,
+                useCORS: true
+            });
+            const imgData = canvas.toDataURL('image/png');
+
+            // Add the image to the PDF and center it
+            const imgProps = doc.getImageProperties(imgData);
+            const pdfWidth = doc.internal.pageSize.getWidth();
+            const pdfHeight = (imgProps.height * pdfWidth) / imgProps.width;
+
+            doc.addImage(imgData, 'PNG', 10, 10, pdfWidth - 20, pdfHeight);
+
+            // Convert PDF to data URL and show in iframe
+            const pdfDataUri = doc.output('datauristring');
+            const pdfFrame = document.getElementById('pdfFrame');
+            pdfFrame.src = pdfDataUri;
+
+            // Display the PDF viewer
+            document.getElementById('pdfViewer').style.display = 'block';
+
+            // Hide the quotation template again
+            // quotationTemplate.style.display = 'none';
+            document.querySelectorAll('iframe')[0].style.display = 'none'
+
+            // Store the PDF document for downloading
+            window.pdfDocument = doc;
+        }
+
+        function downloadPDF() {
+            if (window.pdfDocument) {
+                window.pdfDocument.save('quotation.pdf');
+            }
+        };
+        let options = [["TIAGO EV", "TIGORE EV", "PUNCH EV", "NEXON EV"], ["TIAGO", "TIGORE", "ALTROZ", "PUNCH", "NEXON", "HARRIER", "SAFARI"]]
+
+        let handleDrop = (e) => {
+            let val = document.querySelectorAll('select')[0].value;
+            let select2 = document.querySelectorAll('select')[1];
+
+            if (val == "EV") {
+                select2.innerHTML = '';
+                options[0].forEach(i => {
+                    select2.innerHTML += `<option>${i}</option>`
+                })
+            } else {
+                select2.innerHTML = '';
+                options[1].forEach(i => {
+                    select2.innerHTML += `<option>${i}</option>`
+                })
+            }
+        }
+
+        //generatePDF()
+    </script>
+</body>
+
+</html>
